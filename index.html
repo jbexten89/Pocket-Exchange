@@ -45,7 +45,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font);margin:0;overf
 .opts,.rows{touch-action:pan-y}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
-.app{position:fixed;top:0;left:0;right:0;height:100vh;height:100lvh;height:var(--app-h,100lvh);max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px;
+.app{position:fixed;inset:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:0}
 header{display:flex;align-items:center;justify-content:space-between;min-height:44px}
 header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
@@ -91,7 +91,7 @@ header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
 .key.eq:active{filter:brightness(.9)}
 .key svg{width:26px;height:26px}
 
-.tabs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) ;padding:6px max(16px,env(safe-area-inset-left,0px)) max(8px,calc(env(safe-area-inset-bottom,0px) - 12px))}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) ;padding:6px max(16px,env(safe-area-inset-left,0px)) var(--tab-pb,6px)}
 .tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--muted);padding:6px 0;border-radius:12px}
 .tab svg{width:24px;height:24px}
 .tab[aria-selected="true"]{color:var(--mint)}
@@ -445,14 +445,9 @@ function setTheme(t){
 }
 setTheme(store.get("theme","dark"));
 $("themeBtn").onclick = ()=>setTheme(document.documentElement.getAttribute("data-theme")==="light"?"dark":"light");
-// iOS home-screen apps can report a viewport shorter than the screen; size to the real screen
-function fitScreen(){
-  const standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
-  const portrait = innerHeight >= innerWidth;
-  const h = standalone ? Math.max(innerHeight, portrait ? screen.height : screen.width) : innerHeight;
-  document.documentElement.style.setProperty("--app-h", h + "px");
-}
-fitScreen(); addEventListener("resize", fitScreen); addEventListener("orientationchange", ()=>setTimeout(fitScreen,300));
+// In Safari the page reaches the home bar, so pad for it; as a home-screen app iOS already keeps the page above it
+if (!(navigator.standalone || matchMedia("(display-mode: standalone)").matches))
+  document.documentElement.style.setProperty("--tab-pb","max(6px, env(safe-area-inset-bottom, 0px))");
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 if (!R[S.from]||!R[S.to]) S={from:"JPY",to:"USD",expr:"28962",active:"from"};
 showTab(store.get("tab","convert")==="list"?"list":"convert");
