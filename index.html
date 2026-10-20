@@ -448,7 +448,7 @@ $("themeBtn").onclick = ()=>setTheme(document.documentElement.getAttribute("data
 // In Safari the page reaches the home bar, so pad for it; as a home-screen app iOS already keeps the page above it
 if (!(navigator.standalone || matchMedia("(display-mode: standalone)").matches))
   document.documentElement.style.setProperty("--tab-pb","max(6px, env(safe-area-inset-bottom, 0px))");
-else document.documentElement.style.setProperty("--app-b","-14px"); // nudge the tab bar into the spare space above the home bar
+else document.documentElement.style.setProperty("--app-b","-8px"); // nudge the tab bar into the spare space above the home bar
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 if (!R[S.from]||!R[S.to]) S={from:"JPY",to:"USD",expr:"28962",active:"from"};
 showTab(store.get("tab","convert")==="list"?"list":"convert");
