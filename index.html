@@ -45,7 +45,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font);margin:0;overf
 .opts,.rows{touch-action:pan-y}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
-.app{position:fixed;inset:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px;
+.app{position:fixed;top:0;left:0;right:0;bottom:var(--app-b,0px);max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:0}
 header{display:flex;align-items:center;justify-content:space-between;min-height:44px}
 header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
@@ -448,6 +448,7 @@ $("themeBtn").onclick = ()=>setTheme(document.documentElement.getAttribute("data
 // In Safari the page reaches the home bar, so pad for it; as a home-screen app iOS already keeps the page above it
 if (!(navigator.standalone || matchMedia("(display-mode: standalone)").matches))
   document.documentElement.style.setProperty("--tab-pb","max(6px, env(safe-area-inset-bottom, 0px))");
+else document.documentElement.style.setProperty("--app-b","-14px"); // nudge the tab bar into the spare space above the home bar
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 if (!R[S.from]||!R[S.to]) S={from:"JPY",to:"USD",expr:"28962",active:"from"};
 showTab(store.get("tab","convert")==="list"?"list":"convert");
