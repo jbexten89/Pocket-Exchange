@@ -1,6 +1,6 @@
 // Pocket Exchange service worker: keeps the app itself available offline.
 // Rates are fetched by the page and saved in localStorage, so the API is never cached here.
-const CACHE = "pocket-exchange-v5";
+const CACHE = "pocket-exchange-v6";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
