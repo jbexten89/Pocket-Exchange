@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Pocket Exchange</title>
+<meta name="theme-color" content="#07080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Exchange">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap">
+<style>
+/* Layout: one-screen phone app — header, two currency cards with a rate pill between, keypad filling the rest, tab bar at the bottom. */
+:root{
+  --bg:#07080A; --panel:#111317; --panel-2:#181B21; --line:#23272F;
+  --fg:#E6E8EB; --muted:#8A9099; --mint:#3CC79A; --mint-ink:#062018; --amber:#E3A04F;
+  --font:"Nunito Sans","Avenir Next",Avenir,"Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+html{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg)}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);margin:0;overflow:hidden;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px 0}
+header{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
+.iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--fg)}
+.iconbtn:active{background:var(--panel-2)}
+.iconbtn svg{width:24px;height:24px}
+.stamp{font-size:12px;color:var(--muted);text-align:right;line-height:1.3}
+
+.view{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
+.cards{position:relative;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px 18px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:4px 12px;text-align:left;width:100%;transition:border-color .15s,background .15s}
+.card.active{border-color:var(--mint);background:linear-gradient(180deg,rgba(60,199,154,.10),rgba(60,199,154,.03)) ,var(--panel)}
+.card .name{grid-column:1/-1;font-size:14px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between}
+.card.active .name{color:var(--fg)}
+.amt{font-size:clamp(34px,11vw,48px);font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.amt.expr{font-size:clamp(24px,7.5vw,32px)}
+.amt .caret{display:inline-block;width:3px;height:.9em;background:var(--mint);margin-left:3px;vertical-align:-.1em;animation:blink 1s steps(1) infinite}
+.card:not(.active) .caret{display:none}
+@keyframes blink{50%{opacity:0}}
+.cur{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 6px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-weight:800;font-size:18px;white-space:nowrap}
+.cur .flag{font-size:26px;line-height:1}
+.cur svg{width:14px;height:14px;color:var(--muted)}
+.pill{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 6px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.swap{width:34px;height:34px;border-radius:50%;background:var(--mint);color:var(--mint-ink);display:grid;place-items:center}
+.swap svg{width:18px;height:18px}
+
+.pad{flex:1;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6px}
+.key{border-radius:16px;font-size:clamp(22px,6.5vw,28px);font-weight:600;font-variant-numeric:tabular-nums;display:grid;place-items:center;transition:background .08s}
+.key:active{background:var(--panel-2)}
+.key.op{color:var(--mint);font-size:clamp(24px,7vw,30px)}
+.key.fn{color:var(--muted);font-size:clamp(18px,5.5vw,22px);font-weight:700}
+.key.eq{background:var(--mint);color:var(--mint-ink);font-weight:800}
+.key.eq:active{filter:brightness(.9)}
+.key svg{width:26px;height:26px}
+
+.tabs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) ;padding:6px max(16px,env(safe-area-inset-left,0px)) 6px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--muted);padding:6px 0;border-radius:12px}
+.tab svg{width:24px;height:24px}
+.tab[aria-selected="true"]{color:var(--mint)}
+
+/* list view */
+.listhead{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--mint);border-radius:18px;padding:12px 14px}
+.listhead .flag{font-size:28px}
+.listhead input{flex:1;min-width:0;background:none;border:0;color:var(--fg);font:800 28px var(--font);font-variant-numeric:tabular-nums;outline:none}
+.listhead .code{font-weight:800;font-size:16px}
+.rows{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:18px}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;width:100%}
+.row:last-child{border-bottom:0}
+.row .flag{font-size:26px}
+.row .rc{font-weight:800}
+.row .rn{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .rv{font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;text-align:right}
+.row .rr{font-size:11px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.addbtn{align-self:center;color:var(--mint);font-weight:700;padding:8px 14px;border-radius:999px;border:1px solid var(--line)}
+
+/* picker sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:480px;height:82%;background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;display:flex;flex-direction:column;
+  padding:14px max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-left,0px))}
+.sheet h2{margin:0 0 10px;font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.sheet input{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--fg);font:600 16px var(--font)}
+.opts{flex:1;overflow:auto;margin-top:8px}
+.opt{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;width:100%;padding:10px 4px;border-bottom:1px solid var(--line);text-align:left}
+.opt .flag{font-size:26px}
+.opt.sel .oc{color:var(--mint)}
+.oc{font-weight:800}.on{font-size:13px;color:var(--muted)}
+.star{width:40px;height:40px;display:grid;place-items:center;color:var(--muted)}
+.star.on{color:var(--amber)}
+.star svg{width:22px;height:22px}
+.banner{background:var(--amber);color:#1A1205;border-radius:12px;padding:8px 12px;font-size:12.5px;font-weight:700}
+@media (prefers-reduced-motion:reduce){.amt .caret{animation:none}}
+.refresh.busy svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ptxt{display:flex;flex-direction:column;line-height:1.25}
+.upd{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--muted);font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mint)}
+.dot.stale{background:var(--amber)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--amber);color:#1A1205;font-weight:700;font-size:13px;padding:8px 14px;border-radius:12px;z-index:30;max-width:calc(100% - 32px);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <button class="iconbtn refresh" id="refresh" aria-label="Refresh rates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></svg></button>
+    <h1 id="title">Convert</h1>
+    <span style="width:44px" aria-hidden="true"></span>
+  </header>
+
+  <section class="view" id="convertView">
+    <div class="cards">
+      <div class="card active" id="cardFrom" role="button" tabindex="0" aria-label="From amount">
+        <div class="name"><span id="nameFrom"></span></div>
+        <div class="amt" id="amtFrom"></div>
+        <button class="cur" id="curFrom" aria-label="Change from currency"></button>
+      </div>
+      <div class="pill">
+        <button class="swap" id="swap" aria-label="Swap currencies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v15M3 15l4 4 4-4M17 20V5M13 9l4-4 4 4"/></svg></button>
+        <span class="ptxt"><span id="rateTxt"></span><span class="upd"><i class="dot" id="dot"></i><span id="asof"></span></span></span>
+      </div>
+      <div class="card" id="cardTo" role="button" tabindex="0" aria-label="To amount">
+        <div class="name"><span id="nameTo"></span></div>
+        <div class="amt" id="amtTo"></div>
+        <button class="cur" id="curTo" aria-label="Change to currency"></button>
+      </div>
+    </div>
+
+    <div class="pad" id="pad">
+      <button class="key fn" data-k="AC">AC</button>
+      <button class="key fn" data-k="BS" aria-label="Backspace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button>
+      <button class="key fn" data-k="%">%</button>
+      <button class="key op" data-k="÷">÷</button>
+      <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+      <button class="key op" data-k="×">×</button>
+      <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+      <button class="key op" data-k="−">−</button>
+      <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+      <button class="key op" data-k="+">+</button>
+      <button class="key" data-k="00">00</button><button class="key" data-k="0">0</button><button class="key" data-k=".">.</button>
+      <button class="key eq" data-k="=">=</button>
+    </div>
+  </section>
+
+  <section class="view" id="listView" hidden>
+    <label class="listhead" for="listAmt">
+      <span class="flag" id="listFlag"></span>
+      <input id="listAmt" inputmode="decimal" autocomplete="off" aria-label="Amount">
+      <button class="cur" id="listCur" aria-label="Change base currency"></button>
+    </label>
+    <div class="rows" id="rows"></div>
+    <button class="addbtn" id="editList">+ Add or remove currencies</button>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="convert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg>Convert</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg>Convert List</button>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h2><span id="sheetTitle">Choose currency</span><button class="iconbtn" id="closeSheet" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></h2>
+    <input id="search" type="search" placeholder="Search code or name" autocomplete="off">
+    <div class="opts" id="opts"></div>
+  </div>
+</div>
+
+<script>
+// Units per 1 USD. Built-in fallback (open.er-api.com, 19 Oct 2026); replaced by live rates when online.
+let RATES_TIME = Date.UTC(2026,9,19,0,2);
+let R = {USD:1,EUR:0.890861,JPY:157.911394,GBP:0.750306,CAD:1.41317,MXN:18.457069,AUD:1.435811,NZD:1.768993,CHF:0.824293,CNY:6.69274,HKD:7.848103,KRW:1333.598991,TWD:32.446228,SGD:1.279456,INR:95.184915,THB:33.419704,PHP:63.065741,VND:25869.403572,IDR:18052.884411,MYR:4.081565,BRL:5.072543,ARS:1514.5655,CLP:981.666438,COP:3174.489272,PEN:3.436238,DOP:61.266775,JMD:158.757038,CRC:454.235017,SEK:9.91606,NOK:9.435805,DKK:6.647974,ISK:121.015354,PLN:3.893647,CZK:21.677301,HUF:323.526082,RON:4.738261,TRY:49.543961,ILS:3.109192,AED:3.6725,SAR:3.75,QAR:3.64,EGP:53.524668,ZAR:16.461903,MAD:9.726552,KES:129.78817,NGN:1331.61657};
+const NAMES = {USD:"US Dollar",EUR:"Euro",JPY:"Japanese Yen",GBP:"British Pound",CAD:"Canadian Dollar",MXN:"Mexican Peso",AUD:"Australian Dollar",NZD:"New Zealand Dollar",CHF:"Swiss Franc",CNY:"Chinese Yuan",HKD:"Hong Kong Dollar",KRW:"South Korean Won",TWD:"New Taiwan Dollar",SGD:"Singapore Dollar",INR:"Indian Rupee",THB:"Thai Baht",PHP:"Philippine Peso",VND:"Vietnamese Dong",IDR:"Indonesian Rupiah",MYR:"Malaysian Ringgit",BRL:"Brazilian Real",ARS:"Argentine Peso",CLP:"Chilean Peso",COP:"Colombian Peso",PEN:"Peruvian Sol",DOP:"Dominican Peso",JMD:"Jamaican Dollar",CRC:"Costa Rican Colón",SEK:"Swedish Krona",NOK:"Norwegian Krone",DKK:"Danish Krone",ISK:"Icelandic Króna",PLN:"Polish Złoty",CZK:"Czech Koruna",HUF:"Hungarian Forint",RON:"Romanian Leu",TRY:"Turkish Lira",ILS:"Israeli Shekel",AED:"UAE Dirham",SAR:"Saudi Riyal",QAR:"Qatari Riyal",EGP:"Egyptian Pound",ZAR:"South African Rand",MAD:"Moroccan Dirham",KES:"Kenyan Shilling",NGN:"Nigerian Naira"};
+const ZERO_DEC = new Set(["JPY","KRW","VND","IDR","CLP","ISK","HUF","COP"]);
+const flag = c => c==="EUR" ? "🇪🇺" : String.fromCodePoint(...[...c.slice(0,2)].map(ch=>127397+ch.charCodeAt(0)));
+
+const store = {get(k,d){try{const v=localStorage.getItem("px_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("px_"+k,JSON.stringify(v))}catch(e){}}};
+let S = store.get("state", {from:"JPY",to:"USD",expr:"28962",active:"from"});
+let favs = store.get("favs", ["USD","EUR","JPY","GBP","CAD","MXN","AUD","CHF","CNY","KRW"]);
+let listBase = store.get("listBase","USD"), listAmt = store.get("listAmt","100");
+const save = () => { store.set("state",S); store.set("favs",favs); store.set("listBase",listBase); store.set("listAmt",listAmt); };
+
+const $ = id => document.getElementById(id);
+const convert = (v,a,b) => v / R[a] * R[b];
+function fmt(v, code){
+  if (!isFinite(v)) return "—";
+  const d = ZERO_DEC.has(code) ? 0 : 2;
+  const abs = Math.abs(v);
+  const max = abs !== 0 && abs < 0.01 ? 6 : d;
+  return v.toLocaleString("en-US",{minimumFractionDigits:Math.min(d,max),maximumFractionDigits:max});
+}
+function fmtRate(v){ return v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4); }
+// format a number being typed, keeping trailing "." and decimals as entered
+function fmtTyping(s){
+  if (s==="" ) return "0";
+  const [i,f] = s.split(".");
+  const n = (i===""?"0":Number(i).toLocaleString("en-US"));
+  return f===undefined ? n : n+"."+f;
+}
+
+/* ---- expression engine: numbers, + − × ÷, postfix % ---- */
+const OPS = "+−×÷";
+function tokens(e){ return e.match(/\d*\.?\d+%?|\d+\.%?|[+−×÷]/g) || []; }
+function evaluate(e){
+  let t = tokens(e);
+  while (t.length && OPS.includes(t[t.length-1])) t.pop();
+  if (!t.length) return 0;
+  const num = s => s.endsWith("%") ? parseFloat(s)/100 : parseFloat(s);
+  // pass 1: × ÷
+  const out=[num(t[0])];
+  for (let i=1;i<t.length;i+=2){
+    const op=t[i], n=num(t[i+1]);
+    if (op==="×") out[out.length-1]*=n;
+    else if (op==="÷") out[out.length-1]/=n;
+    else out.push(op, n);
+  }
+  let r=out[0];
+  for (let i=1;i<out.length;i+=2) r = out[i]==="+" ? r+out[i+1] : r-out[i+1];
+  return r;
+}
+const hasOp = e => /[+−×÷%]/.test(e.replace(/^−/,""));
+function prettyExpr(e){ return e.replace(/\d*\.?\d*/g, m => m ? fmtTyping(m) : m).replace(/([+−×÷])/g," $1 "); }
+
+function press(k){
+  let e = S.expr;
+  const last = e.slice(-1);
+  if (k==="AC") e="0";
+  else if (k==="BS") e = e.length>1 ? e.slice(0,-1) : "0";
+  else if (k==="=") { const v=evaluate(e); e = cleanNum(v, S.active==="from"?S.from:S.to); }
+  else if (OPS.includes(k)) { if (OPS.includes(last)) e=e.slice(0,-1)+k; else if (last!==".") e+=k; }
+  else if (k==="%") { if (/\d$/.test(e)) e+="%"; }
+  else if (k===".") { const seg=e.split(/[+−×÷]/).pop(); if (seg.includes("%")) return; if (!seg.includes(".")) e += (seg===""?"0.":"."); }
+  else { // digits / 00
+    const seg=e.split(/[+−×÷]/).pop();
+    if (seg.includes("%")) return;
+    if (e==="0") e = k==="00" ? "0" : k;
+    else if (seg==="0") e = e.slice(0,-1)+(k==="00"?"0":k);
+    else { const digits = seg.replace(".","").length; if (digits>=12) return; e+=k; }
+  }
+  S.expr=e; save(); render();
+}
+function cleanNum(v, code){
+  if (!isFinite(v)) return "0";
+  const d = ZERO_DEC.has(code)?0:2;
+  return String(Math.round(v*10**d)/10**d);
+}
+
+function render(){
+  const v = evaluate(S.expr);
+  const act = S.active, other = act==="from"?"to":"from";
+  const actCode = S[act], otherCode = S[other];
+  const A = act==="from" ? $("amtFrom") : $("amtTo"), B = act==="from" ? $("amtTo") : $("amtFrom");
+  A.classList.toggle("expr", hasOp(S.expr));
+  A.innerHTML = (hasOp(S.expr) ? prettyExpr(S.expr) : fmtTyping(S.expr)) + '<span class="caret"></span>';
+  B.classList.remove("expr");
+  B.textContent = fmt(convert(v, actCode, otherCode), otherCode);
+  $("cardFrom").classList.toggle("active", act==="from");
+  $("cardTo").classList.toggle("active", act==="to");
+  for (const side of ["From","To"]) {
+    const c = S[side.toLowerCase()];
+    $("name"+side).textContent = NAMES[c];
+    $("cur"+side).innerHTML = `<span class="flag">${flag(c)}</span>${c}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
+  }
+  $("rateTxt").textContent = `1 ${S.from} = ${fmtRate(convert(1,S.from,S.to))} ${S.to}`;
+  renderList();
+}
+
+function renderList(){
+  $("listFlag").textContent = flag(listBase);
+  $("listCur").innerHTML = `${listBase}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
+  if (document.activeElement !== $("listAmt")) $("listAmt").value = listAmt;
+  const amt = parseFloat(String(listAmt).replace(/,/g,"")) || 0;
+  $("rows").innerHTML = favs.filter(c=>c!==listBase).map(c=>`
+    <button class="row" data-c="${c}" aria-label="Convert ${listBase} to ${c}">
+      <span class="flag">${flag(c)}</span>
+      <span style="min-width:0"><div class="rc">${c}</div><div class="rn">${NAMES[c]}</div></span>
+      <span><div class="rv">${fmt(convert(amt,listBase,c),c)}</div><div class="rr">1 ${listBase} = ${fmtRate(convert(1,listBase,c))}</div></span>
+    </button>`).join("") || `<p style="padding:16px;color:var(--muted)">Add currencies to compare.</p>`;
+}
+
+/* ---- picker ---- */
+let pickFor = null;
+function openPicker(target){
+  pickFor = target;
+  $("sheetTitle").textContent = target==="favs" ? "Currencies in your list" : "Choose currency";
+  $("search").value=""; drawOpts(); $("scrim").hidden=false;
+  setTimeout(()=>$("search").focus(),50);
+}
+function closePicker(){ $("scrim").hidden=true; pickFor=null; }
+function drawOpts(){
+  const q = $("search").value.trim().toLowerCase();
+  const cur = pickFor==="from"?S.from : pickFor==="to"?S.to : pickFor==="list"?listBase : null;
+  const codes = Object.keys(R).filter(c => !q || c.toLowerCase().includes(q) || NAMES[c].toLowerCase().includes(q));
+  codes.sort((a,b)=> (favs.includes(b)-favs.includes(a)) || a.localeCompare(b));
+  $("opts").innerHTML = codes.map(c=>`
+    <div class="opt ${c===cur?"sel":""}">
+      <span class="flag">${flag(c)}</span>
+      <button data-pick="${c}" style="text-align:left;padding:4px 0"><div class="oc">${c}</div><div class="on">${NAMES[c]}</div></button>
+      <button class="star ${favs.includes(c)?"on":""}" data-fav="${c}" aria-label="${favs.includes(c)?"Remove":"Add"} ${c} ${favs.includes(c)?"from":"to"} list"><svg viewBox="0 0 24 24" fill="${favs.includes(c)?"currentColor":"none"}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6L12 16.8 6.6 19.6l1.1-6L3.2 9.4l6.1-.8z"/></svg></button>
+    </div>`).join("") || `<p style="color:var(--muted);padding:12px 4px">No currency matches “${$("search").value}”.</p>`;
+}
+$("opts").addEventListener("click", e=>{
+  const f = e.target.closest("[data-fav]");
+  if (f){ const c=f.dataset.fav; favs = favs.includes(c) ? favs.filter(x=>x!==c) : [...favs,c]; save(); drawOpts(); renderList(); return; }
+  const p = e.target.closest("[data-pick]");
+  if (!p) return;
+  const c = p.dataset.pick;
+  if (pickFor==="from"||pickFor==="to"){
+    const other = pickFor==="from"?"to":"from";
+    if (S[other]===c) S[other]=S[pickFor];
+    S[pickFor]=c;
+  } else if (pickFor==="list") listBase=c;
+  else if (pickFor==="favs"){ favs = favs.includes(c) ? favs.filter(x=>x!==c) : [...favs,c]; save(); drawOpts(); renderList(); return; }
+  save(); render(); closePicker();
+});
+$("search").addEventListener("input", drawOpts);
+$("closeSheet").onclick = closePicker;
+$("scrim").addEventListener("click", e=>{ if (e.target.id==="scrim") closePicker(); });
+
+/* ---- wiring ---- */
+$("pad").addEventListener("click", e=>{ const k=e.target.closest("[data-k]"); if(k) press(k.dataset.k); });
+function activate(side){
+  if (S.active===side) return;
+  // carry the displayed converted value over so the number doesn't jump
+  const v = evaluate(S.expr), code = S[side];
+  S.expr = cleanNum(convert(v, S[S.active], code), code);
+  S.active = side; save(); render();
+}
+$("cardFrom").addEventListener("click", e=>{ if(!e.target.closest(".cur")) activate("from"); });
+$("cardTo").addEventListener("click", e=>{ if(!e.target.closest(".cur")) activate("to"); });
+$("curFrom").onclick = ()=>openPicker("from");
+$("curTo").onclick = ()=>openPicker("to");
+$("listCur").onclick = e=>{ e.preventDefault(); openPicker("list"); };
+$("editList").onclick = ()=>openPicker("favs");
+$("swap").onclick = ()=>{ [S.from,S.to]=[S.to,S.from]; S.active = S.active==="from"?"to":"from"; save(); render(); };
+$("listAmt").addEventListener("input", e=>{ listAmt = e.target.value.replace(/[^\d.,]/g,""); save(); renderList(); });
+$("rows").addEventListener("click", e=>{
+  const r=e.target.closest("[data-c]"); if(!r) return;
+  S.from=listBase; S.to=r.dataset.c; S.active="from";
+  S.expr = String(parseFloat(String(listAmt).replace(/,/g,""))||0);
+  showTab("convert"); save(); render();
+});
+function showTab(t){
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===t));
+  $("convertView").hidden = t!=="convert"; $("listView").hidden = t!=="list";
+  $("title").textContent = t==="convert"?"Convert":"Convert List";
+  store.set("tab",t);
+}
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.addEventListener("keydown", e=>{
+  if (!$("scrim").hidden){ if(e.key==="Escape") closePicker(); return; }
+  if ($("listView").hidden===false || e.target.tagName==="INPUT") return;
+  const map={"/":"÷","*":"×","-":"−","+":"+","Enter":"=","=":"=","Backspace":"BS","Escape":"AC",".":".","%":"%"};
+  if (/^\d$/.test(e.key)) press(e.key); else if (map[e.key]){ e.preventDefault(); press(map[e.key]); }
+});
+
+/* ---- live rates ---- */
+const API = "https://open.er-api.com/v6/latest/USD";
+function applyRates(rates, time){
+  const next = {};
+  for (const c of Object.keys(NAMES)) if (rates[c] > 0) next[c] = rates[c];
+  if (Object.keys(next).length < 10) return false;
+  R = {...R, ...next}; RATES_TIME = time; return true;
+}
+function showStamp(){
+  const d = new Date(RATES_TIME);
+  $("asof").textContent = d.toLocaleString("en-US",{month:"numeric",day:"numeric",year:"2-digit",hour:"numeric",minute:"2-digit"});
+  $("dot").classList.toggle("stale", Date.now() - RATES_TIME > 36*3600e3);
+}
+function toast(msg){
+  let t=document.querySelector(".toast"); if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");document.body.append(t);}
+  t.textContent=msg; clearTimeout(toast.h); toast.h=setTimeout(()=>t.remove(),3500);
+}
+let fetching=false;
+async function refreshRates(manual){
+  if (fetching) return; fetching=true; $("refresh").classList.add("busy");
+  try{
+    const r = await fetch(API,{cache:"no-store"});
+    const j = await r.json();
+    if (j.result!=="success") throw new Error("bad");
+    const t = j.time_last_update_unix*1000;
+    if (applyRates(j.rates,t)){ store.set("rates",{rates:R,time:t,checked:Date.now()}); render(); showStamp(); if(manual) toast("Rates updated"); }
+  }catch(e){ if(manual) toast(navigator.onLine===false ? "You're offline. Showing saved rates." : "Couldn't reach the rate service. Showing saved rates."); }
+  finally{ fetching=false; $("refresh").classList.remove("busy"); }
+}
+const cached = store.get("rates",null);
+if (cached && cached.time > RATES_TIME) applyRates(cached.rates, cached.time);
+$("refresh").onclick = ()=>refreshRates(true);
+const due = ()=>{ const c=store.get("rates",null); return !c || Date.now()-(c.checked||0) > 3600e3; };
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && due()) refreshRates(false); });
+if (due()) refreshRates(false);
+showStamp();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+if (!R[S.from]||!R[S.to]) S={from:"JPY",to:"USD",expr:"28962",active:"from"};
+showTab(store.get("tab","convert")==="list"?"list":"convert");
+render();
+</script>
+</body>
+</html>
