@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Pocket Exchange</title>
-<meta name="theme-color" content="#07080A">
+<meta name="theme-color" content="#15171C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -17,8 +17,9 @@
 <style>
 /* Layout: one-screen phone app — header, two currency cards with a rate pill between, keypad filling the rest, tab bar at the bottom. */
 :root{
-  --bg:#07080A; --panel:#111317; --panel-2:#181B21; --line:#23272F;
-  --fg:#E6E8EB; --muted:#8A9099; --mint:#3CC79A; --mint-ink:#062018; --amber:#E3A04F;
+  --bg:#15171C; --panel:#1E2128; --panel-2:#2A2E37; --line:#2C3038; --pad:#000000;
+  --fg:#F2F2F2; --muted:#9097A3; --mint:#F2F2F2; --mint-ink:#15171C; --amber:#E3A04F; --live:#34C759;
+  --yellow:#F7E3A1; --yellow-ink:#2A2410; --lilac:#EBD9F7; --lilac-ink:#2A1838;
   --font:"Nunito Sans","Avenir Next",Avenir,"Segoe UI",system-ui,sans-serif;
   color-scheme:dark;
 }
@@ -41,27 +42,31 @@ header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
 .view{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
 .cards{position:relative;display:flex;flex-direction:column;gap:10px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px 18px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:4px 12px;text-align:left;width:100%;transition:border-color .15s,background .15s}
-.card.active{border-color:var(--mint);background:linear-gradient(180deg,rgba(60,199,154,.10),rgba(60,199,154,.03)) ,var(--panel)}
-.card .name{grid-column:1/-1;font-size:14px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between}
-.card.active .name{color:var(--fg)}
+#cardFrom{background:var(--yellow);color:var(--yellow-ink);border-color:transparent}
+#cardTo{background:var(--lilac);color:var(--lilac-ink);border-color:transparent}
+.card.active{box-shadow:inset 0 0 0 2px rgba(0,0,0,.22)}
+.card .name{grid-column:1/-1;font-size:15px;font-weight:700;color:inherit;opacity:.85;display:flex;justify-content:space-between}
+.card.active .name{opacity:1}
 .amt{font-size:clamp(34px,11vw,48px);font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .amt.expr{font-size:clamp(24px,7.5vw,32px)}
-.amt .caret{display:inline-block;width:3px;height:.9em;background:var(--mint);margin-left:3px;vertical-align:-.1em;animation:blink 1s steps(1) infinite}
+.amt .caret{display:inline-block;width:3px;height:.9em;background:currentColor;margin-left:3px;vertical-align:-.1em;animation:blink 1s steps(1) infinite}
 .card:not(.active) .caret{display:none}
 @keyframes blink{50%{opacity:0}}
 .cur{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 6px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-weight:800;font-size:18px;white-space:nowrap}
 .cur .flag{font-size:26px;line-height:1}
+.card .cur{background:rgba(0,0,0,.06);border-color:transparent;color:inherit}
+.card .cur svg{color:inherit}
 .cur svg{width:14px;height:14px;color:var(--muted)}
 .pill{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 6px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .swap{width:34px;height:34px;border-radius:50%;background:var(--mint);color:var(--mint-ink);display:grid;place-items:center}
 .swap svg{width:18px;height:18px}
 
-.pad{flex:1;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6px}
+.pad{flex:1;min-height:0;background:var(--pad);border:1px solid var(--pad);border-radius:22px;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6px}
 .key{border-radius:16px;font-size:clamp(22px,6.5vw,28px);font-weight:600;font-variant-numeric:tabular-nums;display:grid;place-items:center;transition:background .08s}
 .key:active{background:var(--panel-2)}
-.key.op{color:var(--mint);font-size:clamp(24px,7vw,30px)}
-.key.fn{color:var(--muted);font-size:clamp(18px,5.5vw,22px);font-weight:700}
-.key.eq{background:var(--mint);color:var(--mint-ink);font-weight:800}
+.key.op{color:var(--fg);font-size:clamp(24px,7vw,30px)}
+.key.fn{color:var(--fg);font-size:clamp(18px,5.5vw,22px);font-weight:700}
+.key.eq{background:var(--panel);color:var(--fg);font-weight:800}
 .key.eq:active{filter:brightness(.9)}
 .key svg{width:26px;height:26px}
 
@@ -105,7 +110,7 @@ header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ptxt{display:flex;flex-direction:column;line-height:1.25}
 .upd{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--muted);font-size:12px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--mint)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--live)}
 .dot.stale{background:var(--amber)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--amber);color:#1A1205;font-weight:700;font-size:13px;padding:8px 14px;border-radius:12px;z-index:30;max-width:calc(100% - 32px);text-align:center}
 </style>
