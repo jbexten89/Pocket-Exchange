@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Pocket Exchange</title>
 <meta name="theme-color" content="#15171C">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,7 +27,8 @@ html,body{height:100%}
 [hidden]{display:none!important}
 html{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg)}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);margin:0;overflow:hidden;-webkit-tap-highlight-color:transparent}
-*{box-sizing:border-box}
+*{box-sizing:border-box;touch-action:manipulation}
+.opts,.rows{touch-action:pan-y}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
 .app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px;
@@ -120,7 +121,7 @@ header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
 <div class="app">
   <header>
     <button class="iconbtn refresh" id="refresh" aria-label="Refresh rates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></svg></button>
-    <h1 id="title">Convert</h1>
+    <h1 id="title">Pocket Exchange</h1>
     <span style="width:44px" aria-hidden="true"></span>
   </header>
 
@@ -359,7 +360,6 @@ $("rows").addEventListener("click", e=>{
 function showTab(t){
   document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===t));
   $("convertView").hidden = t!=="convert"; $("listView").hidden = t!=="list";
-  $("title").textContent = t==="convert"?"Convert":"Convert List";
   store.set("tab",t);
 }
 
@@ -407,6 +407,12 @@ const due = ()=>{ const c=store.get("rates",null); return !c || Date.now()-(c.ch
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && due()) refreshRates(false); });
 if (due()) refreshRates(false);
 showStamp();
+// block pinch and double-tap zoom (iOS ignores user-scalable=no)
+["gesturestart","gesturechange","gestureend"].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+document.addEventListener("touchmove",e=>{ if(e.touches.length>1) e.preventDefault(); },{passive:false});
+let lastTouch=0;
+document.addEventListener("touchend",e=>{ const now=Date.now(); if(now-lastTouch<350 && !e.target.closest("input")){ e.preventDefault(); e.target.closest("button,[role=button]")?.click(); } lastTouch=now; },{passive:false});
+document.addEventListener("dblclick",e=>e.preventDefault());
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 if (!R[S.from]||!R[S.to]) S={from:"JPY",to:"USD",expr:"28962",active:"from"};
 showTab(store.get("tab","convert")==="list"?"list":"convert");
