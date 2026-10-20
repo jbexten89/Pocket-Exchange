@@ -59,7 +59,10 @@ header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
 .card .cur svg{color:inherit}
 .cur svg{width:14px;height:14px;color:var(--muted)}
 .pill{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 6px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.swap{width:34px;height:34px;border-radius:50%;background:var(--mint);color:var(--mint-ink);display:grid;place-items:center}
+.pill{text-align:left;color:var(--fg);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.pill:active{background:var(--panel-2)}
+.pill:active .swap{transform:rotate(180deg)}
+.swap{transition:transform .2s;width:34px;height:34px;border-radius:50%;background:var(--mint);color:var(--mint-ink);display:grid;place-items:center}
 .swap svg{width:18px;height:18px}
 
 .pad{flex:1;min-height:0;background:var(--pad);border:1px solid var(--pad);border-radius:22px;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6px}
@@ -132,10 +135,10 @@ header h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.01em}
         <div class="amt" id="amtFrom"></div>
         <button class="cur" id="curFrom" aria-label="Change from currency"></button>
       </div>
-      <div class="pill">
-        <button class="swap" id="swap" aria-label="Swap currencies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v15M3 15l4 4 4-4M17 20V5M13 9l4-4 4 4"/></svg></button>
+      <button class="pill" id="swap" aria-label="Swap currencies">
+        <span class="swap" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v15M3 15l4 4 4-4M17 20V5M13 9l4-4 4 4"/></svg></span>
         <span class="ptxt"><span id="rateTxt"></span><span class="upd"><i class="dot" id="dot"></i><span id="asof"></span></span></span>
-      </div>
+      </button>
       <div class="card" id="cardTo" role="button" tabindex="0" aria-label="To amount">
         <div class="name"><span id="nameTo"></span></div>
         <div class="amt" id="amtTo"></div>
